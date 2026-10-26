@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Audit Ledger | Public Finance Management</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="{{ url_for('index') }}">PFM <span>BLOCKCHAIN</span></a>
+  <nav><a href="{{ url_for('index') }}">Dashboard</a><a href="{{ url_for('audit') }}">Audit Ledger</a></nav>
+</header>
+<main class="container">
+  <section class="page-heading">
+    <p class="eyebrow">AUDIT & REPORTS</p>
+    <h1>Blockchain audit ledger</h1>
+    <p>Each record includes a hash and the previous block's hash, allowing basic tampering checks.</p>
+    <div class="integrity {{ 'good-text' if valid else 'bad-text' }}">Chain integrity: {{ "VALID" if valid else "INVALID" }}</div>
+  </section>
+  {% for block in blocks|reverse %}
+  <article class="block-card">
+    <div class="block-head"><strong>Block #{{ block.index }}</strong><span>{{ block.timestamp|int }}</span></div>
+    <p><b>Record</b></p>
+    <pre>{{ block.record | tojson(indent=2) }}</pre>
+    <p class="hash"><b>Previous hash:</b> {{ block.previous_hash }}</p>
+    <p class="hash"><b>Block hash:</b> {{ block.hash }}</p>
+  </article>
+  {% endfor %}
+  <p class="notice">This is a single-process educational ledger, not a distributed blockchain. Hash linking alone does not provide authentication or guarantee real-world immutability.</p>
+</main>
+<footer>Blockchain-Enabled Public Finance Management System · Educational Prototype</footer>
+</body>
+</html>

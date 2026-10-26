@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Public Finance Management</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="{{ url_for('index') }}">PFM <span>BLOCKCHAIN</span></a>
+  <nav><a href="{{ url_for('index') }}">Dashboard</a><a href="{{ url_for('audit') }}">Audit Ledger</a></nav>
+</header>
+<main class="container">
+  <section class="hero">
+    <div>
+      <p class="eyebrow">TRANSPARENT · SECURE · ACCOUNTABLE</p>
+      <h1>Public Finance<br><span>Management</span></h1>
+      <p>Track department requests, review approvals, and explore a hash-linked audit ledger.</p>
+    </div>
+    <div class="status-box">
+      <span class="status-dot {{ 'good' if chain_valid else 'bad' }}"></span>
+      Ledger integrity: <strong>{{ "Valid" if chain_valid else "Invalid" }}</strong>
+      <small>{{ blocks|length }} blocks recorded in this session</small>
+    </div>
+  </section>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <section class="stats">
+    <article><span>Pending Requests</span><strong>{{ pending_count }}</strong></article>
+    <article><span>Approved Requests</span><strong>{{ approved_count }}</strong></article>
+    <article><span>Total Approved Allocation</span><strong>₹{{ "%.2f"|format(allocated) }}</strong></article>
+    <article><span>Recorded Utilization</span><strong>₹{{ "%.2f"|format(spent) }}</strong></article>
+  </section>
+
+  <section class="content-grid">
+    <div class="panel">
+      <div class="section-heading"><div><p class="eyebrow">NEW SUBMISSION</p><h2>Submit fund request</h2></div></div>
+      <form action="{{ url_for('create_request') }}" method="post">
+        <label for="department">Department</label>
+        <select id="department" name="department" required>
+          <option value="">Choose department</option>
+          {% for department in departments %}<option>{{ department }}</option>{% endfor %}
+        </select>
+        <label for="purpose">Purpose</label>
+        <input id="purpose" name="purpose" maxlength="180" required placeholder="e.g. School laboratory equipment">
+        <label for="amount">Requested amount (₹)</label>
+        <input id="amount" name="amount" type="number" min="1" step="0.01" required placeholder="50000">
+        <button class="button" type="submit">Submit request</button>
+      </form>
+    </div>
+
+    <div class="panel">
+      <div class="section-heading"><div><p class="eyebrow">REQUEST REGISTER</p><h2>Fund requests</h2></div></div>
+      {% if requests %}
+      <div class="table-wrap"><table>
+        <thead><tr><th>Department / Purpose</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody>
+        {% for item in requests|reverse %}
+          <tr>
+            <td><strong>{{ item.department }}</strong><small>{{ item.purpose }}</small><small>Request #{{ item.id }}</small></td>
+            <td>₹{{ "%.2f"|format(item.amount) }}</td>
+            <td><span class="pill {{ item.status|lower }}">{{ item.status }}</span></td>
+            <td class="actions">
+              {% if item.status == "Pending" %}
+              <form action="{{ url_for('decide_request', request_id=item.id) }}" method="post" class="inline">
+                <button name="decision" value="Approved" class="mini approve">Approve</button>
+                <button name="decision" value="Rejected" class="mini reject">Reject</button>
+              </form>
+              {% elif item.status == "Approved" and item.utilized < item.amount %}
+              <form action="{{ url_for('update_utilization', request_id=item.id) }}" method="post" class="inline util-form">
+                <input name="amount" type="number" min="0.01" max="{{ item.amount - item.utilized }}" step="0.01" placeholder="₹ utilized" required>
+                <button class="mini approve" type="submit">Record</button>
+              </form>
+              <small>Used ₹{{ "%.2f"|format(item.utilized) }}</small>
+              {% else %}
+              <small>Used ₹{{ "%.2f"|format(item.utilized) }}</small>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+      {% else %}
+      <div class="empty"><strong>No requests yet</strong><p>Submit a sample fund request to begin.</p></div>
+      {% endif %}
+    </div>
+  </section>
+  <p class="notice">Demo only: approval controls are not protected by login, and all data is stored in memory and resets when the app restarts. Do not enter real financial or personal information.</p>
+</main>
+<footer>Blockchain-Enabled Public Finance Management System · Educational Prototype</footer>
+</body>
+</html>
